@@ -1,0 +1,32 @@
+[
+  {
+    "nomeDoTeste": "data de checkout anterior ao checkin",
+    "reserva": {
+      "idHospede": 1,
+      "idQuarto": 2,
+      "dataCheckin": "2023-12-05",
+      "dataCheckout": "2023-12-01"
+    },
+    "mensagemEsperada": "A data de checkout deve ser posterior à data de checkin"
+  },
+  {
+    "nomeDoTeste": "quarto já ocupado",
+    "reserva": {
+      "idHospede": 2,
+      "idQuarto": 1,
+      "dataCheckin": "2023-12-03",
+      "dataCheckout": "2023-12-07"
+    },
+    "mensagemEsperada": "Quarto não está disponível no período informado"
+  },
+  {
+    "nomeDoTeste": "hóspede inexistente",
+    "reserva": {
+      "idHospede": 999,
+      "idQuarto": 3,
+      "dataCheckin": "2023-12-10",
+      "dataCheckout": "2023-12-15"
+    },
+    "mensagemEsperada": "Hóspede não encontrado"
+  }
+]

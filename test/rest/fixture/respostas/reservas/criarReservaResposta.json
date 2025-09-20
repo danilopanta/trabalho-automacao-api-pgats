@@ -1,0 +1,12 @@
+{
+  "success": true,
+  "message": "Reserva criada com sucesso",
+  "data": {
+    "idReserva": 1,
+    "idHospede": 1,
+    "idQuarto": 1,
+    "dataCheckin": "2023-12-01",
+    "dataCheckout": "2023-12-05",
+    "status": "ativa"
+  }
+}

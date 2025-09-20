@@ -1,0 +1,20 @@
+[
+  {
+    "nomeDoTeste": "email duplicado",
+    "hospede": {
+      "nome": "José Santos",
+      "email": "panta@email.com",
+      "telefone": "(11) 77777-7777"
+    },
+    "mensagemEsperada": "Já existe um hóspede cadastrado com este email"
+  },
+  {
+    "nomeDoTeste": "dados obrigatórios em branco",
+    "hospede": {
+      "nome": "",
+      "email": "",
+      "telefone": ""
+    },
+    "mensagemEsperada": "Nome, email e telefone são obrigatórios"
+  }
+]

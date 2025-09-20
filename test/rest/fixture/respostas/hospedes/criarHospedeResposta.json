@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "message": "Hóspede registrado com sucesso",
+  "data": {
+    "id": 1,
+    "nome": "Danilo Panta",
+    "email": "panta@email.com",
+    "telefone": "(11) 99999-9999"
+  }
+}

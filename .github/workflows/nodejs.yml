@@ -31,9 +31,5 @@ jobs:
     - name: Esperar a API estar funcionando
       run: sleep 8
 
-    - name: Criar .env
-      run: |
-        echo BASE_URL_REST=http://localhost:3000 >> .env
-
     - name: Rodar os testes de integração (External)
       run: npm run test-rest-external

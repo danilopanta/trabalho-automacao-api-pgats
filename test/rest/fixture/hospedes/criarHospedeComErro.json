@@ -4,7 +4,8 @@
     "hospede": {
       "nome": "José Santos",
       "email": "panta@email.com",
-      "telefone": "(11) 77777-7777"
+      "telefone": "(11) 77777-7777",
+      "senha": "123456"
     },
     "mensagemEsperada": "Já existe um hóspede cadastrado com este email"
   },
@@ -13,8 +14,9 @@
     "hospede": {
       "nome": "",
       "email": "",
-      "telefone": ""
+      "telefone": "",
+      "senha": ""
     },
-    "mensagemEsperada": "Nome, email e telefone são obrigatórios"
+    "mensagemEsperada": "Nome, email, telefone e senha são obrigatórios"
   }
 ]

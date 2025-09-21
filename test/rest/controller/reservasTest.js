@@ -6,6 +6,7 @@ use(chaiExclude);
 const app = require('../../../app');
 
 describe('Testes de Reservas', () => {
+    let token;
 
     before(async () => {
         // Criar um hóspede para usar nos testes de reserva
@@ -13,6 +14,16 @@ describe('Testes de Reservas', () => {
         await request(app)
             .post('/hospedes')
             .send(criarHospede);
+            
+        // Fazer login para obter o token
+        const loginResponse = await request(app)
+            .post('/hospedes/login')
+            .send({
+                email: criarHospede.email,
+                senha: criarHospede.senha
+            });
+        
+        token = loginResponse.body.data.token;
             
         // Criar segundo hóspede para testes de conflito
         const criarSegundoHospede = require('../fixture/hospedes/criarSegundoHospede.json');
@@ -27,6 +38,7 @@ describe('Testes de Reservas', () => {
         
         const resposta = await request(app)
             .post('/reservas')
+            .set('Authorization', `Bearer ${token}`)
             .send(criarReserva);
 
         expect(resposta.status).to.equal(201);
@@ -39,7 +51,8 @@ describe('Testes de Reservas', () => {
 
     it('Validar que é possível listar todas as reservas', async () => {
         const resposta = await request(app)
-            .get('/reservas');
+            .get('/reservas')
+            .set('Authorization', `Bearer ${token}`);
 
         expect(resposta.status).to.equal(200);
         expect(resposta.body.success).to.equal(true);
@@ -49,7 +62,8 @@ describe('Testes de Reservas', () => {
 
     it('Validar que é possível consultar reserva por ID', async () => {
         const resposta = await request(app)
-            .get('/reservas/1');
+            .get('/reservas/1')
+            .set('Authorization', `Bearer ${token}`);
 
         expect(resposta.status).to.equal(200);
         expect(resposta.body.success).to.equal(true);
@@ -68,13 +82,15 @@ describe('Testes de Reservas', () => {
         
         const respostaCriar = await request(app)
             .post('/reservas')
+            .set('Authorization', `Bearer ${token}`)
             .send(novaReserva);
             
         const idReserva = respostaCriar.body.data.idReserva;
 
         // Agora cancelar a reserva
         const resposta = await request(app)
-            .delete(`/reservas/${idReserva}/cancelar`);
+            .delete(`/reservas/${idReserva}/cancelar`)
+            .set('Authorization', `Bearer ${token}`);
 
         expect(resposta.status).to.equal(200);
         expect(resposta.body.success).to.equal(true);
@@ -83,7 +99,8 @@ describe('Testes de Reservas', () => {
 
     it('Validar que é possível listar reservas por hóspede', async () => {
         const resposta = await request(app)
-            .get('/hospedes/1/reservas');
+            .get('/hospedes/1/reservas')
+            .set('Authorization', `Bearer ${token}`);
 
         expect(resposta.status).to.equal(200);
         expect(resposta.body.success).to.equal(true);
@@ -96,6 +113,7 @@ describe('Testes de Reservas', () => {
         it(`Testando a regra relacionada a ${teste.nomeDoTeste}`, async () => {
             const resposta = await request(app)
                 .post('/reservas')
+                .set('Authorization', `Bearer ${token}`)
                 .send(teste.reserva);
 
             expect(resposta.status).to.equal(400);

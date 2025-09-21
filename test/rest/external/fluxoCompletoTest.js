@@ -12,7 +12,8 @@ describe('Testes de Fluxo Completo (External)', () => {
         const novoHospede = {
             "nome": "Ana Costa",
             "email": "ana@email.com",
-            "telefone": "(11) 77777-7777"
+            "telefone": "(11) 77777-7777",
+            "senha": "123456"
         };
 
         const respostaHospede = await request(app)
@@ -21,6 +22,17 @@ describe('Testes de Fluxo Completo (External)', () => {
 
         expect(respostaHospede.status).to.equal(201);
         const idHospede = respostaHospede.body.data.id;
+
+        // 1.1. Fazer login para obter token
+        const respostaLogin = await request(app)
+            .post('/hospedes/login')
+            .send({
+                email: novoHospede.email,
+                senha: novoHospede.senha
+            });
+
+        expect(respostaLogin.status).to.equal(200);
+        const token = respostaLogin.body.data.token;
 
         // 2. Verificar quartos disponíveis
         const respostaQuartos = await request(app)
@@ -40,6 +52,7 @@ describe('Testes de Fluxo Completo (External)', () => {
 
         const respostaReserva = await request(app)
             .post('/reservas')
+            .set('Authorization', `Bearer ${token}`)
             .send(novaReserva);
 
         expect(respostaReserva.status).to.equal(201);
@@ -55,7 +68,8 @@ describe('Testes de Fluxo Completo (External)', () => {
 
         // 5. Cancelar reserva
         const respostaCancelamento = await request(app)
-            .delete(`/reservas/${idReserva}/cancelar`);
+            .delete(`/reservas/${idReserva}/cancelar`)
+            .set('Authorization', `Bearer ${token}`);
 
         expect(respostaCancelamento.status).to.equal(200);
         expect(respostaCancelamento.body.data.status).to.equal('cancelada');
@@ -73,13 +87,15 @@ describe('Testes de Fluxo Completo (External)', () => {
         const hospede1 = {
             "nome": "Carlos Silva",
             "email": "carlos@email.com",
-            "telefone": "(11) 66666-6666"
+            "telefone": "(11) 66666-6666",
+            "senha": "123456"
         };
 
         const hospede2 = {
             "nome": "Lucia Santos",
             "email": "lucia@email.com",
-            "telefone": "(11) 55555-5555"
+            "telefone": "(11) 55555-5555",
+            "senha": "654321"
         };
 
         const respostaHospede1 = await request(app)
@@ -95,6 +111,24 @@ describe('Testes de Fluxo Completo (External)', () => {
 
         const idHospede1 = respostaHospede1.body.data.id;
         const idHospede2 = respostaHospede2.body.data.id;
+
+        // 1.1. Fazer login para obter tokens
+        const respostaLogin1 = await request(app)
+            .post('/hospedes/login')
+            .send({
+                email: hospede1.email,
+                senha: hospede1.senha
+            });
+
+        const respostaLogin2 = await request(app)
+            .post('/hospedes/login')
+            .send({
+                email: hospede2.email,
+                senha: hospede2.senha
+            });
+
+        const token1 = respostaLogin1.body.data.token;
+        const token2 = respostaLogin2.body.data.token;
 
         // 2. Fazer reservas em quartos diferentes
         const reserva1 = {
@@ -113,10 +147,12 @@ describe('Testes de Fluxo Completo (External)', () => {
 
         const respostaReserva1 = await request(app)
             .post('/reservas')
+            .set('Authorization', `Bearer ${token1}`)
             .send(reserva1);
 
         const respostaReserva2 = await request(app)
             .post('/reservas')
+            .set('Authorization', `Bearer ${token2}`)
             .send(reserva2);
 
         expect(respostaReserva1.status).to.equal(201);
@@ -124,16 +160,42 @@ describe('Testes de Fluxo Completo (External)', () => {
 
         // 3. Verificar que ambas as reservas foram criadas
         const respostaListaReservas = await request(app)
-            .get('/reservas');
+            .get('/reservas')
+            .set('Authorization', `Bearer ${token1}`);
 
         const reservasAtivas = respostaListaReservas.body.data.filter(r => r.status === 'ativa');
         expect(reservasAtivas.length).to.be.greaterThanOrEqual(2);
     });
 
     it('Validar cenário de tentativa de reserva em período ocupado', async () => {
+        // 0. Garantir que existe um hóspede e fazer login
+        const hospede = {
+            "nome": "João Teste",
+            "email": "joao.teste@email.com",
+            "telefone": "(11) 99999-9999",
+            "senha": "123456"
+        };
+
+        const respostaCriarHospede = await request(app)
+            .post('/hospedes')
+            .send(hospede);
+
+        expect(respostaCriarHospede.status).to.equal(201);
+        const idHospede = respostaCriarHospede.body.data.id;
+
+        const respostaLogin = await request(app)
+            .post('/hospedes/login')
+            .send({
+                email: hospede.email,
+                senha: hospede.senha
+            });
+
+        expect(respostaLogin.status).to.equal(200);
+        const token = respostaLogin.body.data.token;
+
         // 1. Fazer primeira reserva
         const primeiraReserva = {
-            "idHospede": 1,
+            "idHospede": idHospede,
             "idQuarto": 5,
             "dataCheckin": "2024-02-01",
             "dataCheckout": "2024-02-05"
@@ -141,13 +203,37 @@ describe('Testes de Fluxo Completo (External)', () => {
 
         const respostaPrimeira = await request(app)
             .post('/reservas')
+            .set('Authorization', `Bearer ${token}`)
             .send(primeiraReserva);
 
         expect(respostaPrimeira.status).to.equal(201);
 
-        // 2. Tentar fazer segunda reserva no mesmo quarto com sobreposição de datas
+        // 2. Criar segundo hóspede para tentar fazer reserva conflitante
+        const hospede2 = {
+            "nome": "Maria Teste",
+            "email": "maria.teste@email.com",
+            "telefone": "(11) 88888-8888",
+            "senha": "654321"
+        };
+
+        const respostaCriarHospede2 = await request(app)
+            .post('/hospedes')
+            .send(hospede2);
+
+        const idHospede2 = respostaCriarHospede2.body.data.id;
+
+        const respostaLogin2 = await request(app)
+            .post('/hospedes/login')
+            .send({
+                email: hospede2.email,
+                senha: hospede2.senha
+            });
+
+        const token2 = respostaLogin2.body.data.token;
+
+        // 3. Tentar fazer segunda reserva no mesmo quarto com sobreposição de datas
         const segundaReserva = {
-            "idHospede": 2,
+            "idHospede": idHospede2,
             "idQuarto": 5,
             "dataCheckin": "2024-02-03",
             "dataCheckout": "2024-02-07"
@@ -155,6 +241,7 @@ describe('Testes de Fluxo Completo (External)', () => {
 
         const respostaSegunda = await request(app)
             .post('/reservas')
+            .set('Authorization', `Bearer ${token2}`)
             .send(segundaReserva);
 
         expect(respostaSegunda.status).to.equal(400);

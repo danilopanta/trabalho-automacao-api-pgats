@@ -5,7 +5,8 @@ Uma API REST desenvolvida com Node.js e Express para gerenciar reservas de hotel
 ## 🚀 Funcionalidades
 
 ### Hóspedes
-- ✅ Registro de hóspedes (nome, email, telefone)
+- ✅ Registro de hóspedes (nome, email, telefone, senha)
+- ✅ Autenticação via JWT
 - ✅ Validação de email único
 - ✅ Consulta de todos os hóspedes
 - ✅ Consulta de hóspede por ID
@@ -16,7 +17,7 @@ Uma API REST desenvolvida com Node.js e Express para gerenciar reservas de hotel
 - ✅ Consulta por status (disponível/ocupado)
 - ✅ Consulta de quarto por ID
 
-### Reservas
+### Reservas (🔒 Protegidas por JWT)
 - ✅ Criação de reservas
 - ✅ Validação de disponibilidade
 - ✅ Validação de datas (checkout > checkin)
@@ -28,6 +29,8 @@ Uma API REST desenvolvida com Node.js e Express para gerenciar reservas de hotel
 
 - **Node.js** - Runtime JavaScript
 - **Express.js** - Framework web
+- **JWT (jsonwebtoken)** - Autenticação e autorização
+- **bcryptjs** - Hash de senhas
 - **Swagger** - Documentação da API
 - **swagger-jsdoc** - Geração de documentação
 - **swagger-ui-express** - Interface da documentação
@@ -49,15 +52,13 @@ hotel-reservas-api/
 │   ├── hospedeModel.js
 │   ├── quartoModel.js
 │   └── reservaModel.js
-├── test/               # Testes automatizados
-│   └── rest/
-│       ├── controller/
-│       ├── external/
-│       └── fixture/
+├── middleware/         # Middlewares (autenticação)
+│   └── auth.js
 ├── app.js              # Configuração do Express e rotas
 ├── server.js           # Inicialização da API
 ├── package.json        # Dependências e scripts
-└── README.md           # Documentação
+├── README.md           # Documentação
+└── AUTENTICACAO.md     # Guia de autenticação JWT
 ```
 
 ## 🔧 Instalação
@@ -94,6 +95,7 @@ A documentação completa da API está disponível via Swagger UI em:
 
 #### Hóspedes
 - `POST /hospedes` - Registrar novo hóspede
+- `POST /hospedes/login` - Login do hóspede (retorna JWT)
 - `GET /hospedes` - Listar todos os hóspedes
 - `GET /hospedes/{id}` - Consultar hóspede por ID
 
@@ -103,7 +105,7 @@ A documentação completa da API está disponível via Swagger UI em:
 - `GET /quartos/status/{status}` - Consultar por status
 - `GET /quartos/{id}` - Consultar quarto por ID
 
-#### Reservas
+#### Reservas (🔒 Requer Autenticação)
 - `POST /reservas` - Criar nova reserva
 - `GET /reservas` - Listar todas as reservas
 - `GET /reservas/{id}` - Consultar reserva por ID
@@ -119,19 +121,31 @@ curl -X POST http://localhost:3000/hospedes \\
   -d '{
     "nome": "Danilo Panta",
     "email": "panta@email.com",
-    "telefone": "(11) 99999-9999"
+    "telefone": "(11) 99999-9999",
+    "senha": "minhasenha123"
   }'
 ```
 
-### 2. Listar Quartos Disponíveis
+### 2. Fazer Login (obter JWT Token)
+```bash
+curl -X POST http://localhost:3000/hospedes/login \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "email": "panta@email.com",
+    "senha": "minhasenha123"
+  }'
+```
+
+### 3. Listar Quartos Disponíveis
 ```bash
 curl http://localhost:3000/quartos/status/disponível
 ```
 
-### 3. Criar uma Reserva
+### 4. Criar uma Reserva (🔒 Requer Token)
 ```bash
 curl -X POST http://localhost:3000/reservas \\
   -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer SEU_TOKEN_AQUI" \\
   -d '{
     "idHospede": 1,
     "idQuarto": 1,
@@ -140,28 +154,21 @@ curl -X POST http://localhost:3000/reservas \\
   }'
 ```
 
-### 4. Cancelar uma Reserva
+### 5. Cancelar uma Reserva (🔒 Requer Token)
 ```bash
-curl -X DELETE http://localhost:3000/reservas/1/cancelar
+curl -X DELETE http://localhost:3000/reservas/1/cancelar \\
+  -H "Authorization: Bearer SEU_TOKEN_AQUI"
 ```
 
-## 🧪 Testes
+## 🔐 Autenticação JWT
 
-A aplicação inclui testes automatizados usando Mocha, Chai e Supertest.
+Para acessar as rotas de reserva, você precisa:
 
-### Executar Testes
-```bash
-# Testes de controllers
-npm test
+1. **Registrar** um hóspede com senha
+2. **Fazer login** para obter o token JWT  
+3. **Incluir o token** no header `Authorization: Bearer <token>`
 
-# Testes de fluxo completo
-npm run test:external
-```
-
-### Estrutura de Testes
-- **Controller Tests:** Testes unitários dos endpoints
-- **External Tests:** Testes de fluxo completo da aplicação
-- **Fixtures:** Dados de teste organizados
+**Consulte o arquivo `AUTENTICACAO.md` para instruções detalhadas.**
 
 ## 🗄️ Banco de Dados
 
@@ -181,7 +188,8 @@ A aplicação utiliza armazenamento em memória para fins de demonstração. Os 
 
 ### Hóspedes
 - Email deve ser único
-- Todos os campos são obrigatórios
+- Todos os campos são obrigatórios (nome, email, telefone, senha)
+- Senhas são armazenadas com hash bcrypt
 
 ### Reservas
 - Hóspede deve existir
@@ -190,6 +198,7 @@ A aplicação utiliza armazenamento em memória para fins de demonstração. Os 
 - Não é possível reservar quarto já ocupado no período
 - Ao criar reserva, quarto fica ocupado
 - Ao cancelar reserva, quarto volta a ficar disponível
+- **Todas as operações de reserva requerem autenticação JWT**
 
 ## 🚨 Tratamento de Erros
 
@@ -198,6 +207,8 @@ A API retorna respostas padronizadas com os seguintes códigos:
 - **200** - Sucesso
 - **201** - Criado com sucesso
 - **400** - Erro de validação
+- **401** - Token de acesso requerido
+- **403** - Token inválido ou expirado
 - **404** - Recurso não encontrado
 - **500** - Erro interno do servidor
 
@@ -214,22 +225,24 @@ A API retorna respostas padronizadas com os seguintes códigos:
 
 ```json
 {
-  "start": "node server.js",          // Execução em produção
-  "dev": "nodemon server.js",         // Desenvolvimento com hot reload
-  "test": "mocha test/rest/controller/*.js --timeout 10000",  // Testes unitários
-  "test:external": "mocha test/rest/external/*.js --timeout 10000"  // Testes de fluxo
+  "start": "node server.js",        // Execução em produção
+  "dev": "nodemon server.js",       // Desenvolvimento com hot reload
+  "test": "echo \"Error: no test specified\" && exit 1"
 }
 ```
 
 ## 📝 Melhorias Futuras
 
 - [ ] Implementar banco de dados persistente (MongoDB/PostgreSQL)
-- [ ] Adicionar autenticação e autorização
+- [x] ~~Adicionar autenticação e autorização~~ ✅ **Implementado**
+- [ ] Implementar testes automatizados
 - [ ] Adicionar logs estruturados
 - [ ] Implementar paginação nas listagens
 - [ ] Adicionar filtros avançados
 - [ ] Implementar notificações
 - [ ] Adicionar relatórios de ocupação
+- [ ] Implementar refresh tokens
+- [ ] Adicionar roles de usuário (admin, hóspede)
 
 ## 👨‍💻 Desenvolvimento
 

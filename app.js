@@ -7,6 +7,9 @@ const hospedeController = require('./controller/hospedeController');
 const quartoController = require('./controller/quartoController');
 const reservaController = require('./controller/reservaController');
 
+// Importar middleware de autenticação
+const { authenticateToken } = require('./middleware/auth');
+
 const app = express();
 
 // Middleware para parsing JSON
@@ -27,6 +30,18 @@ const swaggerOptions = {
                 description: 'Servidor de desenvolvimento',
             },
         ],
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
+                }
+            }
+        },
+        security: [{
+            bearerAuth: []
+        }],
     },
     apis: ['./app.js'], // Arquivos onde estão as definições da API
 };
@@ -53,6 +68,7 @@ app.get('/', (req, res) => {
  *         - nome
  *         - email
  *         - telefone
+ *         - senha
  *       properties:
  *         id:
  *           type: integer
@@ -66,11 +82,57 @@ app.get('/', (req, res) => {
  *         telefone:
  *           type: string
  *           description: Telefone do hóspede
+ *         senha:
+ *           type: string
+ *           description: Senha do hóspede
  *       example:
  *         id: 1
  *         nome: Danilo Panta
  *         email: panta@email.com
  *         telefone: (11) 99999-9999
+ *         senha: minhasenha123
+ *     
+ *     Login:
+ *       type: object
+ *       required:
+ *         - email
+ *         - senha
+ *       properties:
+ *         email:
+ *           type: string
+ *           description: Email do hóspede
+ *         senha:
+ *           type: string
+ *           description: Senha do hóspede
+ *       example:
+ *         email: panta@email.com
+ *         senha: minhasenha123
+ *     
+ *     TokenResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *         message:
+ *           type: string
+ *         data:
+ *           type: object
+ *           properties:
+ *             hospede:
+ *               $ref: '#/components/schemas/Hospede'
+ *             token:
+ *               type: string
+ *               description: JWT Token
+ *       example:
+ *         success: true
+ *         message: Login realizado com sucesso
+ *         data:
+ *           hospede:
+ *             id: 1
+ *             nome: Danilo Panta
+ *             email: panta@email.com
+ *             telefone: (11) 99999-9999
+ *           token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *     
  *     Quarto:
  *       type: object
@@ -151,12 +213,15 @@ app.get('/', (req, res) => {
  *               - nome
  *               - email
  *               - telefone
+ *               - senha
  *             properties:
  *               nome:
  *                 type: string
  *               email:
  *                 type: string
  *               telefone:
+ *                 type: string
+ *               senha:
  *                 type: string
  *     responses:
  *       201:
@@ -165,6 +230,30 @@ app.get('/', (req, res) => {
  *         description: Erro de validação
  */
 app.post('/hospedes', hospedeController.registrarHospede);
+
+/**
+ * @swagger
+ * /hospedes/login:
+ *   post:
+ *     summary: Realiza login do hóspede
+ *     tags: [Hóspedes]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Login'
+ *     responses:
+ *       200:
+ *         description: Login realizado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TokenResponse'
+ *       401:
+ *         description: Email ou senha inválidos
+ */
+app.post('/hospedes/login', hospedeController.loginHospede);
 
 /**
  * @swagger
@@ -312,6 +401,8 @@ app.get('/quartos/:id', quartoController.consultarQuartoPorId);
  *   post:
  *     summary: Cria uma nova reserva
  *     tags: [Reservas]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -339,8 +430,12 @@ app.get('/quartos/:id', quartoController.consultarQuartoPorId);
  *         description: Reserva criada com sucesso
  *       400:
  *         description: Erro de validação
+ *       401:
+ *         description: Token de acesso requerido
+ *       403:
+ *         description: Token inválido ou expirado
  */
-app.post('/reservas', reservaController.criarReserva);
+app.post('/reservas', authenticateToken, reservaController.criarReserva);
 
 /**
  * @swagger
@@ -348,6 +443,8 @@ app.post('/reservas', reservaController.criarReserva);
  *   get:
  *     summary: Lista todas as reservas
  *     tags: [Reservas]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Lista de reservas
@@ -365,7 +462,7 @@ app.post('/reservas', reservaController.criarReserva);
  *                   items:
  *                     $ref: '#/components/schemas/Reserva'
  */
-app.get('/reservas', reservaController.listarTodasReservas);
+app.get('/reservas', authenticateToken, reservaController.listarTodasReservas);
 
 /**
  * @swagger
@@ -373,6 +470,8 @@ app.get('/reservas', reservaController.listarTodasReservas);
  *   get:
  *     summary: Consulta reserva por ID
  *     tags: [Reservas]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -386,7 +485,7 @@ app.get('/reservas', reservaController.listarTodasReservas);
  *       404:
  *         description: Reserva não encontrada
  */
-app.get('/reservas/:id', reservaController.consultarReservaPorId);
+app.get('/reservas/:id', authenticateToken, reservaController.consultarReservaPorId);
 
 /**
  * @swagger
@@ -394,6 +493,8 @@ app.get('/reservas/:id', reservaController.consultarReservaPorId);
  *   delete:
  *     summary: Cancela uma reserva
  *     tags: [Reservas]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -409,7 +510,7 @@ app.get('/reservas/:id', reservaController.consultarReservaPorId);
  *       404:
  *         description: Reserva não encontrada
  */
-app.delete('/reservas/:id/cancelar', reservaController.cancelarReserva);
+app.delete('/reservas/:id/cancelar', authenticateToken, reservaController.cancelarReserva);
 
 /**
  * @swagger
@@ -417,6 +518,8 @@ app.delete('/reservas/:id/cancelar', reservaController.cancelarReserva);
  *   get:
  *     summary: Lista reservas de um hóspede
  *     tags: [Reservas]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: idHospede
@@ -428,6 +531,6 @@ app.delete('/reservas/:id/cancelar', reservaController.cancelarReserva);
  *       200:
  *         description: Lista de reservas do hóspede
  */
-app.get('/hospedes/:idHospede/reservas', reservaController.listarReservasPorHospede);
+app.get('/hospedes/:idHospede/reservas', authenticateToken, reservaController.listarReservasPorHospede);
 
 module.exports = app;

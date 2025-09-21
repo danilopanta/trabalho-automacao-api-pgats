@@ -5,8 +5,8 @@ class HospedeController {
     // Registrar um novo hóspede
     async registrarHospede(req, res) {
         try {
-            const { nome, email, telefone } = req.body;
-            const novoHospede = hospedeService.registrarHospede(nome, email, telefone);
+            const { nome, email, telefone, senha } = req.body;
+            const novoHospede = hospedeService.registrarHospede(nome, email, telefone, senha);
             
             res.status(201).json({
                 success: true,
@@ -15,6 +15,25 @@ class HospedeController {
             });
         } catch (error) {
             res.status(400).json({
+                success: false,
+                message: error.message
+            });
+        }
+    }
+
+    // Login do hóspede
+    async loginHospede(req, res) {
+        try {
+            const { email, senha } = req.body;
+            const resultado = hospedeService.loginHospede(email, senha);
+            
+            res.status(200).json({
+                success: true,
+                message: 'Login realizado com sucesso',
+                data: resultado
+            });
+        } catch (error) {
+            res.status(401).json({
                 success: false,
                 message: error.message
             });

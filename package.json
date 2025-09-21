@@ -9,7 +9,7 @@
     "test": "mocha 'test/**/*.js' --timeout 10000 --reporter mochawesome",
     "test-rest-external": "mocha \"test/rest/external/**/*.js\" --timeout 10000 --reporter mochawesome",
     "test-rest-controller": "mocha \"test/rest/controller/**/*.js\" --timeout 10000",
-    "test-rest": "mocha \"test/rest/**/*.js\" --timeout 10000 --reporter mochawesome",
+    "test-rest": "mocha \"test/rest/**/*.js\" --timeout 10000 --reporter mochawesome"
   },
   "keywords": [
     "api",

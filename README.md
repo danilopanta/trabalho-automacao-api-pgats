@@ -86,6 +86,57 @@ hotel-reservas-api/
    - API: http://localhost:3000
    - Documentação Swagger: http://localhost:3000/api-docs
 
+## 🧪 Execução de Testes
+
+A aplicação possui uma suíte completa de testes automatizados (23 testes no total).
+
+### Scripts Disponíveis
+
+```bash
+# Executar todos os testes com relatório HTML
+npm test
+
+# Executar apenas testes de controllers (testes unitários)
+npm run test-rest-controller
+
+# Executar apenas testes externos (testes de integração)
+npm run test-rest-external
+
+# Executar todos os testes REST (sem relatório)
+npm run test-rest-simple
+
+# Executar testes unitários com relatório
+npm run test-unit
+
+# Executar testes de integração com relatório
+npm run test-integration
+
+# Executar testes e abrir relatório automaticamente
+npm run test-report
+```
+
+### Relatórios de Teste
+
+Os scripts que incluem `--reporter mochawesome` geram relatórios em HTML com:
+- **Resultados detalhados** de cada teste
+- **Tempo de execução** de cada caso
+- **Gráficos visuais** de taxa de sucesso
+- **Logs de erros** detalhados
+
+Os relatórios são salvos em: `mochawesome-report/mochawesome.html`
+
+### Estrutura dos Testes
+
+- **`test/rest/controller/`** - Testes unitários de cada controller
+  - `hospedesTest.js` - Testes de hóspedes (6 testes)
+  - `quartosTest.js` - Testes de quartos (6 testes)
+  - `reservasTest.js` - Testes de reservas (8 testes)
+
+- **`test/rest/external/`** - Testes de fluxo completo
+  - `fluxoCompletoTest.js` - Testes de integração (3 testes)
+
+**Total: 23 testes** cobrindo todas as funcionalidades da API.
+
 ## 📖 Documentação da API
 
 A documentação completa da API está disponível via Swagger UI em:

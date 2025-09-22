@@ -7,8 +7,9 @@ on:
     branches: [ "master" ]
 
 jobs:
-  build:
+  test-api:
     runs-on: ubuntu-latest
+    name: "Test GraphQL & REST APIs"
 
     steps:
     - name: Checkout repository
@@ -22,14 +23,14 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Rodar os testes unitários (Controllers)
-      run: npm run test-rest-controller
+    - name: Rodar testes GraphQL
+      run: npm run test:graphql
 
-    - name: Subir a API REST
-      run: npm start &
+    - name: Rodar testes REST
+      run: npm run test:rest
 
-    - name: Esperar a API estar funcionando
-      run: sleep 8
+    - name: Rodar teste de fluxo completo
+      run: npm run test:fluxo
 
-    - name: Rodar os testes de integração (External)
-      run: npm run test-rest-external
+    - name: Rodar todos os testes
+      run: npm test

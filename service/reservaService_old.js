@@ -58,13 +58,13 @@ class ReservaService {
     }
 
     // Verificar disponibilidade do quarto no período
-    verificarDisponibilidadeNoPeriodo(quartoId, dataCheckin, dataCheckout) {
+    verificarDisponibilidadeNoPeriodo(idQuarto, dataCheckin, dataCheckout) {
         const checkin = new Date(dataCheckin);
         const checkout = new Date(dataCheckout);
 
         // Verificar se há reservas ativas conflitantes
         const reservasConflitantes = reservas.filter(r => {
-            if (r.quartoId != quartoId || r.status !== 'ativa') {
+            if (r.idQuarto != idQuarto || r.status !== 'ativa') {
                 return false;
             }
 
@@ -84,38 +84,43 @@ class ReservaService {
     }
 
     // Consultar reserva por ID
-    consultarReservaPorId(id) {
-        const reserva = reservas.find(r => r.id == id);
+    consultarReservaPorId(idReserva) {
+        const reserva = reservas.find(r => r.idReserva == idReserva);
         if (!reserva) {
             throw new Error('Reserva não encontrada');
         }
         return reserva;
     }
 
-    // Cancelar uma reserva
-    cancelarReserva(id) {
-        const reserva = this.consultarReservaPorId(id);
+    // Cancelar reserva
+    cancelarReserva(idReserva) {
+        const reserva = this.consultarReservaPorId(idReserva);
+        
+        if (reserva.status === 'cancelada') {
+            throw new Error('Reserva já foi cancelada');
+        }
 
+        // Marcar reserva como cancelada
         reserva.status = 'cancelada';
 
-        // Verificar se há outras reservas ativas para o quarto
+        // Verificar se há outras reservas ativas para o mesmo quarto
         const outrasReservasAtivas = reservas.filter(r => 
-            r.quartoId === reserva.quartoId && 
-            r.status === 'ativa' &&
-            r.id !== reserva.id
+            r.idQuarto === reserva.idQuarto && 
+            r.status === 'ativa' && 
+            r.idReserva !== reserva.idReserva
         );
 
         // Se não há outras reservas ativas, marcar quarto como disponível
         if (outrasReservasAtivas.length === 0) {
-            quartoService.marcarComoDisponivel(reserva.quartoId);
+            quartoService.marcarComoDisponivel(reserva.idQuarto);
         }
 
         return reserva;
     }
 
     // Listar reservas por hóspede
-    listarReservasPorHospede(hospedeId) {
-        return reservas.filter(r => r.hospedeId == hospedeId);
+    listarReservasPorHospede(idHospede) {
+        return reservas.filter(r => r.idHospede == idHospede);
     }
 }
 

@@ -1,11 +1,13 @@
 class Reserva {
-    constructor(idReserva, idHospede, idQuarto, dataCheckin, dataCheckout) {
-        this.idReserva = idReserva;
-        this.idHospede = idHospede;
-        this.idQuarto = idQuarto;
+    constructor(id, hospedeId, quartoId, dataCheckin, dataCheckout) {
+        this.id = id;
+        this.hospedeId = hospedeId;
+        this.quartoId = quartoId;
         this.dataCheckin = dataCheckin;
         this.dataCheckout = dataCheckout;
         this.status = 'ativa';
+        this.valorTotal = 0; // Será calculado pelo serviço
+        this.dataCriacao = new Date().toISOString();
     }
 }
 
